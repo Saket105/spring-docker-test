@@ -16,7 +16,7 @@ pipeline{
 
         stage('Maven Build'){
             steps{
-                sh 'mvn clean package -DskipTests'
+                bat 'mvn clean package -DskipTests'
             }
         }
 
@@ -32,15 +32,15 @@ pipeline{
         }
         stage('Docker Build'){
             steps{
-                sh "docker build -t ${DOCKER_IMAGE}"
+                bat "docker build -t ${DOCKER_IMAGE}"
             }
         }
         stage('Deploy to Dev'){
             steps{
                 script{
-                    sh 'docker stop ${APP_NAME} || true'
-                    sh 'docker rm ${APP_NAME} || true'
-                    sh """
+                    bat 'docker stop ${APP_NAME} || true'
+                    bat 'docker rm ${APP_NAME} || true'
+                    bat """
                     docker run -d \\
                     --name ${APP_NAME} \\
                     -p ${APP_PORT} \\
@@ -54,7 +54,7 @@ pipeline{
             steps{
                 script{
                     sleep(10)
-                    sh 'curl -f http://localhost:${APP_PORT}/actuator/health || echo "Health check faild but continuing"'
+                    bat 'curl -f http://localhost:${APP_PORT}/actuator/health || echo "Health check faild but continuing"'
                     echo "✅ DEV Deployment Successful!"
                     echo "🌐 Access DEV at: http://localhost:${APP_PORT}"
                 }
