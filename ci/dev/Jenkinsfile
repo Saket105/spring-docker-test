@@ -24,7 +24,7 @@ pipeline{
             steps{
                 script{
                     //read dev configuration
-                    def config = readYaml file: 'dev/values-dev.yml'
+                    def config = readYaml file: 'ci/dev/values-dev.yml'
                     echo "Building for environment: ${config.environment}"
                     echo "Server port: ${config.server.port}"
                 }
