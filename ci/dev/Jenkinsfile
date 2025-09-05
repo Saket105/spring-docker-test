@@ -1,60 +1,65 @@
-pipeline{
+pipeline {
     agent any
-    environment{
+    environment {
         ENV_NAME = 'dev'
         APP_NAME = 'firstspring-dev'
         APP_PORT = '9595'
         DOCKER_IMAGE = 'firstspring-app:dev-latest'
     }
 
-    stages{
-        stage('Checkout Code'){
-            steps{
+    stages {
+        stage('Checkout Code') {
+            steps {
                 git branch: 'master', url: 'https://github.com/Saket105/spring-docker-test'
             }
         }
 
-        stage('Maven Build'){
-            steps{
+        stage('Maven Build') {
+            steps {
                 bat 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Load Dev Config'){
-            steps{
-                script{
-                    //read dev configuration
-                    def config = readYaml file: 'ci/dev/values-dev.yml'
-                    echo "Building for environment: ${config.environment}"
-                    echo "Server port: ${config.server.port}"
+        stage('Load Dev Config') {
+            steps {
+                script {
+                    // read dev configuration
+                    devConfig = readYaml file: 'ci/dev/values-dev.yml'
+                    echo "Building for environment: ${devConfig.environment}"
+                    echo "Server port: ${devConfig.server.port}"
                 }
             }
         }
-        stage('Docker Build'){
-            steps{
+
+        stage('Docker Build') {
+            steps {
                 bat "docker build -t %DOCKER_IMAGE% ."
             }
         }
-        stage('Deploy to Dev'){
-            steps{
-                script{
-                    bat '''
-                                for /f "tokens=1" %%i in ('docker ps -q --filter "publish=9595"') do docker stop %%i
-                                for /f "tokens=1" %%i in ('docker ps -a -q --filter "publish=9595"') do docker rm %%i
 
-                                REM Run new container
-                                docker run -it -d -p 9595:9595 --name %APP_NAME% %DOCKER_IMAGE%
-                        '''
+        stage('Deploy to Dev') {
+            steps {
+                script {
+                    def port = devConfig.server.port   // correct reference
+                    bat """
+                        for /f "tokens=1" %%i in ('docker ps -q --filter "publish=${port}"') do docker stop %%i
+                        for /f "tokens=1" %%i in ('docker ps -a -q --filter "publish=${port}"') do docker rm %%i
+
+                        REM Run new container
+                        docker run -it -d -p ${port}:${port} --name %APP_NAME% %DOCKER_IMAGE% --server.port=${port}
+                    """
                 }
             }
         }
+
         stage('Verify Dev Deployment'){
             steps{
                 script{
+                    def port = devConfig.server.port   // use the same loaded port
                     sleep(10)
-                    bat 'curl -f http://localhost:%APP_PORT%/actuator/health || echo "Health check faild but continuing"'
+                    bat "curl -f http://localhost:${port}/actuator/health || echo Health check failed but continuing"
                     echo "✅ DEV Deployment Successful!"
-                    echo "🌐 Access DEV at: http://localhost:${APP_PORT}"
+                    echo "🌐 Access DEV at: http://localhost:${port}"
                 }
             }
         }
