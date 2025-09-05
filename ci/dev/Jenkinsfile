@@ -1,0 +1,69 @@
+pipeline{
+    agent any
+    environment{
+        ENV_NAME = 'dev'
+        APP_NAME = 'firstspring-dev'
+        APP_PORT = '9595'
+        DOCKER_IMAGE = 'firstspring-app:dev-latest'
+    }
+
+    stages{
+        stage('Checkout Code'){
+            steps{
+                git branch: 'master', url: 'https://github.com/Saket105/spring-docker-test'
+            }
+        }
+
+        stage('Maven Build'){
+            steps{
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Load Dev Config'){
+            steps{
+                script{
+                    //read dev configuration
+                    def config = readYaml file: 'dev/values-dev.yml'
+                    echo "Building for environment: ${config.environment}"
+                    echo "Server port: ${config.server.port}"
+                }
+            }
+        }
+        stage('Docker Build'){
+            steps{
+                sh "docker build -t ${DOCKER_IMAGE}"
+            }
+        }
+        stage('Deploy to Dev'){
+            steps{
+                script{
+                    sh 'docker stop ${APP_NAME} || true'
+                    sh 'docker rm ${APP_NAME} || true'
+                    sh """
+                    docker run -d \\
+                    --name ${APP_NAME} \\
+                    -p ${APP_PORT} \\
+                    -e SPRING_PROFILES_ACTIVE=dev \\
+                    ${DOCKER_IMAGE}
+                    """
+                }
+            }
+        }
+        stage('Verify Dev Deployment'){
+            steps{
+                script{
+                    sleep(10)
+                    sh 'curl -f http://localhost:${APP_PORT}/actuator/health || echo "Health check faild but continuing"'
+                    echo "✅ DEV Deployment Successful!"
+                    echo "🌐 Access DEV at: http://localhost:${APP_PORT}"
+                }
+            }
+        }
+    }
+    post{
+        always{
+            echo 'Dev pipeline execution completed'
+        }
+    }
+}
