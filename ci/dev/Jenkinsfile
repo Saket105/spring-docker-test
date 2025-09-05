@@ -46,7 +46,7 @@ pipeline {
                         for /f "tokens=1" %%i in ('docker ps -a -q --filter "publish=${port}"') do docker rm %%i
 
                         REM Run new container
-                        docker run -it -d -p ${port}:${port} --name %APP_NAME% %DOCKER_IMAGE% --server.port=${port}
+                        docker run -it -d -p 9595:9595 --name firstspring-dev firstspring-app:dev-latest java -jar app.jar --server.port=9595
                     """
                 }
             }
