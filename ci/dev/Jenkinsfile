@@ -38,15 +38,11 @@ pipeline{
         stage('Deploy to Dev'){
             steps{
                 script{
-                    bat 'docker stop %APP_NAME% || echo "Container not running"'
-                    bat 'docker rm %APP_NAME% echo "Container does not exist"'
-                    bat """
-                    docker run -d \\
-                    --name ${APP_NAME} \\
-                    -p ${APP_PORT} \\
-                    -e SPRING_PROFILES_ACTIVE=dev \\
-                    ${DOCKER_IMAGE}
-                    """
+                    bat '''
+                    docker stop firstspring-dev 2>nul || echo Stopping existing container...
+                    docker rm firstspring-dev 2>nul || echo Removing existing container...
+                    docker run -d --name firstspring-dev -p 9595:9595 firstspring-app:dev-latest
+                    '''
                 }
             }
         }
