@@ -39,12 +39,12 @@ pipeline{
             steps{
                 script{
                     bat '''
-                                for /f "tokens=1" %i in ('docker ps -q --filter "publish=9595"') do docker stop %i
-                                for /f "tokens=1" %i in ('docker ps -a -q --filter "publish=9595"') do docker rm %i
+                    for /f "tokens=1" %i in ('docker ps -q --filter "publish=9595"') do docker stop %i
+                    for /f "tokens=1" %i in ('docker ps -a -q --filter "publish=9595"') do docker rm %i
 
-                                # Run new container
-                                docker run -d --name firstspring-dev -p 9595:9595 firstspring-app:dev-latest
-                                '''
+                    # Run new container
+                    docker run -d --name firstspring-dev -p 9595:9595 firstspring-app:dev-latest
+                    '''
                 }
             }
         }
