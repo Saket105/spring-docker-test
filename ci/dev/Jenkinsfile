@@ -39,7 +39,6 @@ pipeline{
             steps{
                 script{
                     bat '''
-                                # Stop and remove ANY container using port 9595
                                 for /f "tokens=1" %i in ('docker ps -q --filter "publish=9595"') do docker stop %i
                                 for /f "tokens=1" %i in ('docker ps -a -q --filter "publish=9595"') do docker rm %i
 
