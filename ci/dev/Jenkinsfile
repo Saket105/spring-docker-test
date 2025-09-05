@@ -40,17 +40,22 @@ pipeline {
         stage('Deploy to Dev') {
             steps {
                 script {
-                    def port = devConfig.server.port   // correct reference
+                    def port = 9595
                     bat """
                         for /f "tokens=1" %%i in ('docker ps -q --filter "publish=${port}"') do docker stop %%i
                         for /f "tokens=1" %%i in ('docker ps -a -q --filter "publish=${port}"') do docker rm %%i
 
                         REM Run new container
-                        docker run -it -d -p 9595:9595 --name firstspring-dev firstspring-app:dev-latest java -jar app.jar --server.port=9595
+                        docker run -d -p ${port}:${port} --name firstspring-dev firstspring-app:dev-latest --server.port=${port}
+
+                        REM Stream logs for a while
+                        timeout /t 15 >nul
+                        docker logs --tail 100 firstspring-dev
                     """
                 }
             }
         }
+
 
         stage('Verify Dev Deployment'){
             steps{
